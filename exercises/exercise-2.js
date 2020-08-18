@@ -84,11 +84,48 @@ const deleteGreeting = async (req, res) => {
     const greetings = await db.collection("greetings").deleteOne({ id });
 
     assert.equal(1, greetings.deletedCount);
-    client.close();
+
     res.status(204).json({ status: 204, data: id });
   } catch (err) {
     res.status(500).json({ status: 500, data: req.body, message: err.message });
   }
+  client.close();
 };
 
-module.exports = { createGreeting, getGreeting, getGreetings, deleteGreeting };
+const updateGreeting = async (req, res) => {
+  const _id = req.params._id;
+  const hello = req.body;
+  const client = await MongoClient(MONGO_URI, { useUnifiedTopology: true });
+
+  try {
+    await client.connect();
+
+    const db = client.db("exercise_1");
+    const newValues = { $set: hello };
+
+    if (req.body.hello === undefined) {
+      throw new Error("Missing info");
+    }
+
+    const greetings = await db
+      .collection("greetings")
+      .updateOne({ _id }, newValues);
+    assert.equal(1, greetings.matchedCount);
+    assert.equal(1, greetings.modifiedCount);
+
+    res.status(200).json({ status: 200, data: { _id, hello } });
+  } catch (err) {
+    res
+      .status(500)
+      .json({ status: 500, data: { ...req.body }, message: err.message });
+  }
+  client.close();
+};
+
+module.exports = {
+  createGreeting,
+  getGreeting,
+  getGreetings,
+  deleteGreeting,
+  updateGreeting,
+};
