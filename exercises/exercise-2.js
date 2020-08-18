@@ -4,6 +4,11 @@ const assert = require("assert");
 require("dotenv").config();
 const { MONGO_URI } = process.env;
 
+const options = {
+  useNewUrlParser: true,
+  useUnifiedTopology: true,
+};
+
 async function createGreeting(req, res) {
   try {
     const client = await MongoClient(MONGO_URI, { useUnifiedTopology: true });
@@ -45,7 +50,6 @@ const getGreeting = async (req, res) => {
 };
 
 const getGreetings = async (req, res) => {
-  const _id = req.params._id;
   const client = await MongoClient(MONGO_URI, { useUnifiedTopology: true });
   await client.connect();
   const db = client.db("exercise_1");
@@ -69,4 +73,22 @@ const getGreetings = async (req, res) => {
   }
 };
 
-module.exports = { createGreeting, getGreeting, getGreetings };
+const deleteGreeting = async (req, res) => {
+  const id = req.params._id;
+  const client = await MongoClient(MONGO_URI, { useUnifiedTopology: true });
+
+  try {
+    await client.connect();
+
+    const db = client.db("exercise_1");
+    const greetings = await db.collection("greetings").deleteOne({ id });
+
+    assert.equal(1, greetings.deletedCount);
+    client.close();
+    res.status(204).json({ status: 204, data: id });
+  } catch (err) {
+    res.status(500).json({ status: 500, data: req.body, message: err.message });
+  }
+};
+
+module.exports = { createGreeting, getGreeting, getGreetings, deleteGreeting };
